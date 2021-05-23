@@ -168,6 +168,7 @@ dashboard.new(
     includeAll=true,
     multi=true,
     sort=1,
+    regex='[a-z]d[\\D]$|nvme[\\d]n[\\d]$',
   )
 )
 .addTemplate(
@@ -516,4 +517,150 @@ dashboard.new(
            ]
        ),
        {'h':8, 'w':24, 'x': 0, 'y': 96}
+).addPanel(quickGraph(
+            'UDP datagrams',
+            format='short',
+            min=0,
+            decimals=null,
+            alignRight=true,
+            sort=0,
+            targets=[
+                panelTarget('in datagrams',  'rate(net_udp_indatagrams{host="$server"}[$inter])'),
+                panelTarget('out datagrams', 'rate(net_udp_outdatagrams{host="$server"}[$inter])'),
+            ]
+        ),
+        {'h':8, 'w':24, 'x': 0, 'y': 104}
+)
+.addPanel(row.new('Network interface stats for $netif', repeat="netif"),{'h': 1, 'w':24, 'x': 0, 'y': 112})
+.addPanel(quickGraph(
+            'Network Usage',
+            format='bps',
+            decimals=null,
+            sort=0,
+            targets=[
+                panelTarget('$netif: in',  'rate(net_bytes_recv{host="$server",interface="$netif"}[$inter]) * 8'),
+                panelTarget('$netif: out', 'rate(net_bytes_sent{host="$server",interface="$netif"}[$inter])* 8 * -1'),
+            ]
+        ),
+        {'h':8, 'w':12, 'x': 0, 'y': 112}
+).addPanel(quickGraph(
+             'Network Packets',
+             format='pps',
+             decimals=null,
+             sort=0,
+             targets=[
+                 panelTarget('$netif: in',  'rate(net_packets_recv{host="$server",interface="$netif"}[$inter])'),
+                 panelTarget('$netif: out', 'rate(net_packets_sent{host="$server",interface="$netif"}[$inter]) * -1'),
+             ]
+         ),
+         {'h':8, 'w':12, 'x': 12, 'y': 112}
+).addPanel(quickGraph(
+              'Network drops',
+              format='pps',
+              decimals=null,
+              sort=0,
+              targets=[
+                  panelTarget('$netif: in',  'rate(net_drop_in{host="$server",interface="$netif"}[$inter])'),
+                  panelTarget('$netif: out', 'rate(net_drop_out{host="$server",interface="$netif"}[$inter]) * -1'),
+              ]
+          ),
+          {'h':8, 'w':12, 'x': 0, 'y': 120}
+).addPanel(quickGraph(
+               'Network drops',
+               format='short',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('$netif: in',  'rate(net_err_in{host="$server",interface="$netif"}[$inter])'),
+                   panelTarget('$netif: out', 'rate(net_err_out{host="$server",interface="$netif"}[$inter]) * -1'),
+               ]
+           ),
+           {'h':8, 'w':12, 'x': 12, 'y': 120}
+)
+.addPanel(row.new('Swap'),{'h': 1, 'w':24, 'x': 0, 'y': 128})
+.addPanel(quickGraph(
+               'Swap I/O bytes',
+               format='bytes',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('in',  'rate(swap_in{host="$server"}[$inter])'),
+                   panelTarget('out', 'rate(swap_out{host="$server"}[$inter]) * -1'),
+               ]
+           ),
+           {'h':8, 'w':12, 'x': 0, 'y': 128}
+)
+.addPanel(quickGraph(
+               'Swap usage',
+               format='bytes',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('used', 'swap_used{host="$server"}'),
+                   panelTarget('total', 'swap_total{host="$server"}'),
+               ]
+           ),
+           {'h':8, 'w':12, 'x': 12, 'y': 128}
+)
+.addPanel(row.new('Disk IOPS for /dev/$disk', repeat="disk"),{'h': 1, 'w':24, 'x': 0, 'y': 136})
+.addPanel(quickGraph(
+               'Disk I/O requests for /dev/$disk',
+               format='iops',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('$disk: read',  'rate(diskio_reads{host="$server",name="$disk"}[$inter])'),
+                   panelTarget('$disk: write', 'rate(diskio_writes{host="$server",name="$disk"}[$inter]) * -1'),
+               ]
+           ),
+           {'h':8, 'w':8, 'x': 0, 'y': 136}
+)
+.addPanel(quickGraph(
+               'Disk I/O bytes for /dev/$disk',
+               format='bytes',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('$disk: read',  'rate(diskio_read_bytes{host="$server",name="$disk"}[$inter])'),
+                   panelTarget('$disk: write', 'rate(diskio_write_bytes{host="$server",name="$disk"}[$inter]) * -1'),
+               ]
+           ),
+           {'h':8, 'w':8, 'x': 8, 'y': 136}
+)
+.addPanel(quickGraph(
+               'Disk IOPS for /dev/$disk',
+               format='ms',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('$disk: read',  'rate(diskio_read_time{host="$server",name="$disk"}[$inter])'),
+                   panelTarget('$disk: write', 'rate(diskio_write_time{host="$server",name="$disk"}[$inter]) * -1'),
+               ]
+           ),
+           {'h':8, 'w':8, 'x': 16, 'y': 136}
+)
+.addPanel(row.new('Disk space usage for $mountpoint', repeat="mountpoint"),{'h': 1, 'w':24, 'x': 0, 'y': 144})
+.addPanel(quickGraph(
+               'Disk usage for $mountpoint',
+               format='bytes',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('$mountpoint: used',  'disk_used{host="$server",path="$mountpoint"}'),
+                   panelTarget('$mountpoint: total', 'disk_total{host="$server",path="$mountpoint"}'),
+               ]
+           ),
+           {'h':8, 'w':12, 'x': 0, 'y': 144}
+)
+.addPanel(quickGraph(
+               'Disk inodes for $mountpoint',
+               format='bytes',
+               decimals=null,
+               sort=0,
+               targets=[
+                   panelTarget('$mountpoint: used',  'disk_inodes_used{host="$server",path="$mountpoint"}'),
+                   panelTarget('$mountpoint: total', 'disk_inodes_total{host="$server",path="$mountpoint"}'),
+               ]
+           ),
+           {'h':8, 'w':12, 'x': 12, 'y': 144}
 )
