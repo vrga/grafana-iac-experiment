@@ -19,7 +19,8 @@ local quickGraph(
             sort=1,
             hideEmpty=true,
             hideZero=true,
-            repeat=null
+            repeat=null,
+            nullPointMode='connected'
 ) = graphPanel.new(
         title,
         datasource='${datasource}',
@@ -41,6 +42,7 @@ local quickGraph(
         legend_hideEmpty=hideEmpty,
         legend_hideZero=hideZero,
         repeat=repeat,
+        nullPointMode=nullPointMode,
     ).addTargets(targets);
 
 local panelTarget(
