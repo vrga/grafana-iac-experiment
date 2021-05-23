@@ -19,6 +19,7 @@ local quickGraph(
             sort=1,
             hideEmpty=true,
             hideZero=true,
+            repeat=null
 ) = graphPanel.new(
         title,
         datasource='${datasource}',
@@ -39,6 +40,7 @@ local quickGraph(
         sort=sort,
         legend_hideEmpty=hideEmpty,
         legend_hideZero=hideZero,
+        repeat=repeat,
     ).addTargets(targets);
 
 local panelTarget(
@@ -344,10 +346,13 @@ dashboard.new(
         panelTarget('zombies', 'processes_zombies{host="$server"}'),
         panelTarget('paging', 'processes_paging{host="$server"}'),
         panelTarget('unknown', 'processes_unknown{host="$server"}'),
-    ]
+    ],
+    decimals=0
     ),
-    {'h':10, 'w':12, 'x': 12, 'y': 14}
-).addPanel(quickGraph(
+    {'h':10, 'w':12, 'x': 12, 'y': 26}
+)
+.addPanel(row.new('Temps'),{'h': 1, 'w':24, 'x': 0, 'y': 38})
+.addPanel(quickGraph(
         'Temperatures',
         format='celsius',
         min=20,
@@ -358,5 +363,157 @@ dashboard.new(
             panelTarget('{{name}}-{{pstate}}', 'nvidia_smi_temperature_gpu{host="$server"}'),
         ]
     ),
-    {'h':8, 'w':12, 'x': 0, 'y': 23}
+    {'h':8, 'w':12, 'x': 0, 'y': 38}
+)
+.addPanel(quickGraph(
+         'Disk temperatures',
+         format='celsius',
+         min=20,
+         max=100,
+         decimals=null,
+         targets=[
+             panelTarget('{{model}} - {{device}}', 'hddtemp_temperature{host="$server"}'),
+         ]
+     ),
+     {'h':8, 'w':12, 'x': 12, 'y': 38}
+ )
+.addPanel(row.new('Memory'),{'h': 1, 'w':24, 'x': 0, 'y': 46})
+.addPanel(quickGraph(
+        'Memory usage',
+        format='bytes',
+        min=0,
+        max=null,
+        decimals=null,
+        alignRight=true,
+        targets=[
+            panelTarget('total', 'mem_total{host="$server"}'),
+            panelTarget('used', 'mem_used{host="$server"}'),
+            panelTarget('cached', 'mem_cached{host="$server"}'),
+            panelTarget('free', 'mem_free{host="$server"}'),
+            panelTarget('buffered', 'mem_buffered{host="$server"}'),
+        ]
+    ),
+    {'h':12, 'w':24, 'x': 0, 'y': 46}
+)
+.addPanel(row.new('Kernel'),{'h': 1, 'w':24, 'x': 0, 'y': 58})
+.addPanel(quickGraph(
+        'Context switches',
+        format='ops',
+        min=0,
+        max=null,
+        decimals=null,
+        targets=[
+            panelTarget('context switches', 'rate(kernel_context_switches{host="$server"}[$inter] >= 10)'),
+        ]
+    ),
+    {'h':8, 'w':8, 'x': 0, 'y': 58}
+).addPanel(quickGraph(
+         'Forks',
+         format='ops',
+         min=0,
+         max=null,
+         decimals=null,
+         targets=[
+             panelTarget('forks', 'rate(kernel_processes_forked{host="$server"}[$inter] >= 10)'),
+         ]
+     ),
+     {'h':8, 'w':8, 'x': 8, 'y': 58}
+).addPanel(quickGraph(
+          'File descriptors',
+          format='short',
+          min=0,
+          max=null,
+          decimals=null,
+          targets=[
+              panelTarget('max', 'linux_sysctl_fs_file-max{host="$server"}'),
+              panelTarget('opened', 'linux_sysctl_fs_file-nr{host="$server"}'),
+          ]
+      ),
+      {'h':8, 'w':8, 'x': 16, 'y': 58}
+)
+.addPanel(row.new('Interrupts'),{'h': 1, 'w':24, 'x': 0, 'y': 66})
+.addPanel(quickGraph(
+          'Interrupts',
+          format='ops',
+          min=0,
+          max=null,
+          decimals=null,
+          targets=[
+              panelTarget('{{irq}}', 'rate(interrupts_total{host="$server"} >= 10)'),
+          ]
+      ),
+      {'h':12, 'w':24, 'x': 16, 'y': 66}
+)
+.addPanel(row.new('Per-cpu usage'),{'h': 1, 'w':24, 'x': 0, 'y': 72})
+.addPanel(quickGraph(
+          'CPU usage for $cpu',
+          format='percent',
+          min=0,
+          max=100,
+          decimals=null,
+          repeat="cpu",
+          targets=[
+              panelTarget('user', 'cpu_usage_user{host="$server", cpu="$cpu"}'),
+              panelTarget('system', 'cpu_usage_system{host="$server", cpu="$cpu"}'),
+              panelTarget('softirq', 'cpu_usage_softirq{host="$server", cpu="$cpu"}'),
+              panelTarget('steal', 'cpu_usage_steal{host="$server", cpu="$cpu"}'),
+              panelTarget('nice', 'cpu_usage_nice{host="$server", cpu="$cpu"}'),
+              panelTarget('irq', 'cpu_usage_irq{host="$server", cpu="$cpu"}'),
+              panelTarget('iowait', 'cpu_usage_iowait{host="$server", cpu="$cpu"}'),
+              panelTarget('guest', 'cpu_usage_guest{host="$server", cpu="$cpu"}'),
+              panelTarget('guest_nice', 'cpu_usage_nice{host="$server", cpu="$cpu"}'),
+          ]
+      ),
+      {'h':8, 'w':6, 'x': 0, 'y': 72}
+)
+.addPanel(row.new('Conntrack'),{'h': 1, 'w':24, 'x': 0, 'y': 80})
+.addPanel(quickGraph(
+          'Netfilter conntrack usage',
+          format='short',
+          min=0,
+          decimals=null,
+          targets=[
+              panelTarget('current', 'conntrack_ip_conntrack_count{host="$server"}'),
+              panelTarget('maximum', 'conntrack_ip_conntrack_max{host="$server"}'),
+          ]
+      ),
+      {'h':8, 'w':24, 'x': 0, 'y': 80}
+)
+.addPanel(row.new('Network stack (TCP)'),{'h': 1, 'w':24, 'x': 0, 'y': 88})
+.addPanel(quickGraph(
+          'TCP connections',
+          format='short',
+          min=0,
+          decimals=null,
+          alignRight=true,
+          sort=2,
+          targets=[
+              panelTarget('CLOSED', 'netstat_tcp_close{host="$server"}'),
+              panelTarget('CLOSE_WAIT', 'netstat_tcp_close_wait{host="$server"}'),
+              panelTarget('CLOSING', 'netstat_tcp_closing{host="$server"}'),
+              panelTarget('ESTABLISHED', 'netstat_tcp_established{host="$server"}'),
+              panelTarget('FIN_WAIT1', 'netstat_tcp_fin_wait_1{host="$server"}'),
+              panelTarget('FIN_WAIT2', 'netstat_tcp_fin_wait_2{host="$server"}'),
+              panelTarget('LAST_ACK', 'netstat_tcp_last_ack{host="$server"}'),
+              panelTarget('SYN_RECV', 'netstat_tcp_syn_recv{host="$server"}'),
+              panelTarget('SYN_SENT', 'netstat_tcp_syn_sent{host="$server"}'),
+              panelTarget('TIME_WAIT', 'netstat_tcp_time_wait{host="$server"}'),
+          ]
+      ),
+      {'h':8, 'w':24, 'x': 0, 'y': 88}
+).addPanel(quickGraph(
+           'TCP handshake issues',
+           format='short',
+           min=0,
+           decimals=null,
+           alignRight=true,
+           sort=0,
+           targets=[
+               panelTarget('estabresets', 'rate(net_tcp_estabresets{host="$server"}[$inter])'),
+               panelTarget('outrsts', 'rate(net_tcp_outrsts{host="$server"}[$inter])'),
+               panelTarget('activeopens', 'rate(net_tcp_activeopens{host="$server"}[$inter])'),
+               panelTarget('passiveopens', 'rate(net_tcp_passiveopens{host="$server"}[$inter])'),
+           ]
+       ),
+       {'h':8, 'w':24, 'x': 0, 'y': 96}
 )
